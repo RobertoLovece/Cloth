@@ -23,6 +23,14 @@ export default class Point {
             // this.defaultColor = 0x808080;
         }
 
+        this.setPreviousPosition(x, y, z);
+
+    }
+
+    //
+
+    test() {
+        this.position.z += 0.005;
     }
 
     //

@@ -12,9 +12,8 @@ require("./index.css");
 
 let renderer, scene, camera, controls;
 let container, stats, clock;
-let raycaster, color, mouse, leftMouseButtonDown, clicked;
-let instanceSticks, instancePoints;
-let dist;
+let instancePoints, shapeGeometry, shape;
+let dist, order;
 
 //
 
@@ -25,15 +24,9 @@ window.onload = function () {
     init();
     initObjects();
     initControls();
-    initRaycaster();
     initStats();
 
-    adjustCamera();
-
     animate();
-
-    initEventListeners();
-    onWindowResize();
 }
 
 //
@@ -43,8 +36,8 @@ function init() {
     clock = new THREE.Clock();
 
     renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setPixelRatio( window.devicePixelRatio );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
 
     container = document.getElementById('canvas');
     container.appendChild(renderer.domElement);
@@ -54,21 +47,67 @@ function init() {
 
     scene = new THREE.Scene();
 
+    camera.position.set(200, 12, 200);
+    camera.lookAt(0, 0, 0);
+
 }
 
 //
 
 function initObjects() {
 
-    var dimensions = getTrueCanvasSize()
-    var canvasW = dimensions[0];
-    var canvasH = dimensions[1];
+    const width = 50
+    const height = 50;
 
-    var instancedObj = initInstanceObjects(canvasW, canvasH);
-    instancePoints = instancedObj[0];
-    instanceSticks = instancedObj[1];
+    instancePoints = initInstanceObjects(width, height);
 
     scene.add(instancePoints.mesh);
+
+    var axesHelper = new THREE.AxesHelper(10);
+    scene.add(axesHelper);
+
+    var pos = []
+    order = []
+
+    // number of squares
+    var squares = (width - 1) * (height - 1);
+    var points = instancePoints.points;
+
+    for (let i = 0; i < (points.length+0); i++) {
+
+        if ((i+1) < squares+(height-1)) {
+            if (((i+1) % width) != 0) {
+                pos.push(points[i].position);
+                pos.push(points[i+1].position);
+                pos.push(points[i + width].position);
+
+                order.push(i);
+                order.push(i+1);
+                order.push(i + width);
+
+                pos.push(points[i+1].position);
+                pos.push(points[i+width].position);
+                pos.push(points[i + width + 1].position);
+
+                order.push(i+1);
+                order.push(i+width);
+                order.push(i + width + 1);
+            }
+        }
+    }
+
+    // console.log(pos);
+
+    shapeGeometry = new THREE.BufferGeometry().setFromPoints(pos);
+    var material = new THREE.MeshBasicMaterial({
+        color: "blue",
+        side: THREE.DoubleSide,
+        // wireframe: true,
+    });
+    shape = new THREE.Mesh(shapeGeometry, material);
+    scene.add(shape);
+
+    console.log(shapeGeometry.attributes.position);
 
 }
 
@@ -97,216 +136,36 @@ function initStats() {
 
 //
 
-function initRaycaster() {
-
-    raycaster = new THREE.Raycaster();
-    mouse = new THREE.Vector2(30, 30);
-
-    color = new THREE.Color(0xff0000);
-    clicked = false;
-
-}
-
-//
-
-function adjustCamera() {
-    camera.position.set(10, 12, 20);
-    camera.lookAt(0,0,0);
-}
-
-//
-
 function animate() {
 
     requestAnimationFrame(animate);
 
-    raycaster.setFromCamera(mouse, camera);
-
     let delta = clock.getDelta();
 
     // if less than 5 fps pause animation to stop glitches
-    if (delta > 1/5) {
+    if (delta > 1 / 5) {
         delta = 0;
     }
 
     instancePoints.updatePoints(delta);
 
-    var selected = raycastPoints();
+    for (let i = 0; i < order.length; i++) {
 
-    // run update sticks from 3-5 times to make it more stable and less jittery
-    for (let i = 0; i < 3; i++) {
-        instanceSticks.update(delta);
+        var index = order[i]
+
+        var pos = instancePoints.points[index].position;
+
+        shapeGeometry.attributes.position.setXYZ(i, pos.x, pos.y, pos.z);
+
     }
 
-    // if (selected == false) {
-    //     raycastSticks();
-    // }
+    shapeGeometry.attributes.position.needsUpdate = true;
+
+    shapeGeometry.computeVertexNormals();
 
     stats.update();
 
     renderer.render(scene, camera);
-
-}
-
-//
-
-function raycastPoints() {
-
-    var selected = false;
-
-    var intersection = raycaster.intersectObject(instancePoints.mesh);
-
-    if (intersection.length > 0) {
-
-        var intersectionId = intersection[0].instanceId;
-
-        instancePoints.mesh.setColorAt(intersectionId, color);
-        instancePoints.mesh.instanceColor.needsUpdate = true;
-
-        selected = true
-
-        // if (clicked) {
-        //     clicked = false;
-        //     instancePoints.points[intersectionId].toggleLocked();
-        // }
-
-    }
-    else {
-        clicked = false;
-    }
-
-    return selected;
-}
-
-//
-
-function raycastSticks() {
-
-    var intersection = raycaster.intersectObject(instanceSticks.mesh);
-
-    if (intersection.length > 0) {
-
-        var intersectionId = intersection[0].instanceId;
-
-        instanceSticks.mesh.setColorAt(intersectionId, color);
-        instanceSticks.mesh.instanceColor.needsUpdate = true;
-
-        // if (leftMouseButtonDown) {
-        //     instanceSticks.sticks.splice(intersectionId, 1);
-        //     instanceSticks.mesh.count = instanceSticks.sticks.length;
-        // }
-
-    }
-}
-
-//
-
-// calculates the size of the bounding box of what is visible on the canvas given
-// different screen sizes
-function getTrueCanvasSize() {
-
-    var returnArray = [];
-
-    var vFOV = THREE.MathUtils.degToRad(camera.fov); // convert vertical fov to radians
-
-    var canvasH = 2 * Math.tan(vFOV / 2) * dist; // visible height
-    // camera aspect changes on resize
-    var canvasW = canvasH * camera.aspect;           // visible width
-
-    returnArray.push(canvasW);
-    returnArray.push(canvasH);
-
-    return returnArray;
-
-}
-
-//
-
-function initEventListeners() {
-
-    // for resize
-    window.addEventListener('resize', onWindowResize, false);
-
-    // for mouse
-    document.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('click', onClick, false);
-
-    document.body.onmousedown = setLeftButtonState;
-    document.body.onmousemove = setLeftButtonState;
-    document.body.onmouseup = setLeftButtonState;
-
-    // for mobile touch
-    document.addEventListener('touchstart', onTouchStart, false);
-    document.addEventListener('touchmove', onTouchMove, { passive: false });
-    document.addEventListener('touchend', onTouchEnd, false);
-
-}
-
-/*
- *  CODE BELOW IS FOR EVENT LISTENERS 
- */
-
-function setLeftButtonState(e) {
-    leftMouseButtonDown = e.buttons === undefined
-        ? e.which === 1
-        : e.buttons === 1;
-}
-
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-}
-
-//
-
-function onMouseMove(event) {
-
-    event.preventDefault();
-
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-
-}
-
-// 
-
-function onClick() { 
-    clicked = true;
-}
-
-//
-
-function onTouchStart(event) {
-
-    // overrites default mouse functionality 
-    // event.preventDefault();
-
-    mouse.x = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
-
-    leftMouseButtonDown = true;
-
-}
-
-function onTouchMove(event) {
-
-    event.preventDefault();
-    
-    mouse.x = (event.changedTouches[0].clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.changedTouches[0].clientY / window.innerHeight) * 2 + 1;
-
-}
-
-//
-
-function onTouchEnd() {
-
-    // event.preventDefault();
-
-    leftMouseButtonDown = false;
 
 }
 

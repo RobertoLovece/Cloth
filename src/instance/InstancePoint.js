@@ -32,6 +32,7 @@ export default class InstancePoint {
             var point = this.points[index]; 
             
             point.updatePoint(delta);
+            // point.test();
 
             dummy.position.set(point.position.x, point.position.y, point.position.z);
 
