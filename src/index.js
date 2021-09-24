@@ -12,7 +12,7 @@ require("./index.css");
 
 let renderer, scene, camera, controls;
 let container, stats, clock;
-let instancePoints, shapeGeometry, shape;
+let instancePoints, shapeGeometry, shape, sticks;
 let dist, order;
 
 //
@@ -47,7 +47,7 @@ function init() {
 
     scene = new THREE.Scene();
 
-    camera.position.set(200, 12, 200);
+    camera.position.set(50, 12, 50);
     camera.lookAt(0, 0, 0);
 
 }
@@ -56,10 +56,12 @@ function init() {
 
 function initObjects() {
 
-    const width = 50
+    const width = 51;
     const height = 50;
 
-    instancePoints = initInstanceObjects(width, height);
+    var obj = initInstanceObjects(width, height);
+    instancePoints = obj[0];
+    sticks = obj[1];
 
     scene.add(instancePoints.mesh);
 
@@ -148,6 +150,12 @@ function animate() {
     }
 
     instancePoints.updatePoints(delta);
+    for (let i = 0; i < 3; i++) {
+        sticks.forEach(function (stick) {
+            stick.updateStick(delta);
+        });
+    }
+
 
     for (let i = 0; i < order.length; i++) {
 
