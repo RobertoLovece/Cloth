@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 
 const bounce = 0.9;
 const gravity = -2;
-const wind = 0.0001;
+const wind = -0.5;
 const friction = 0.999;
 
 //

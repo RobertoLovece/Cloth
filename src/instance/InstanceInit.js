@@ -23,6 +23,22 @@ export function initInstanceObjects(width, height) {
 
     var stick;
 
+    // for (let i = 0 ; i < points.length ; i++) {
+    //     if (((i+1) % width) != 0) {
+    //         //left to right
+    //         stick = new Stick(points[i], points[i+1]);
+    //         sticks.push(stick);
+
+            
+    //     }
+        
+    //     //top to bottom   
+    //     if (i < ((points.length-width))) {
+    //         stick = new Stick(points[i], points[i+width]);
+    //         sticks.push(stick);
+    //     }
+    // }
+
     for (let i = 0 ; i < points.length ; i++) {
         if (((i+1) % width) != 0) {
             //left to right
@@ -39,9 +55,20 @@ export function initInstanceObjects(width, height) {
         }
     }
 
+    // top locks
     points[0].toggleLocked();
     points[width-1].toggleLocked();
     points[(Math.round(width/2)-1)].toggleLocked();
+
+
+    // bottom locks
+    points[(width*height)-1].toggleLocked();
+    points[(width*height)-(Math.round(width/2))-1].toggleLocked();
+    points[(width*height)-(width-1)].toggleLocked();
+
+    // sidelocks
+    points[(Math.round((width*height)/2))-Math.round(width/2)-1].toggleLocked();
+    points[(Math.round((width*height)/2))+Math.round(width/2)-1].toggleLocked();
 
     console.log(sticks)
 

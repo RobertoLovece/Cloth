@@ -1,6 +1,6 @@
 import * as THREE from 'three';
+import { Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { UVsDebug } from 'three/examples/jsm/utils/UVsDebug.js';
 
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
@@ -8,7 +8,11 @@ import { initInstanceObjects } from './instance/InstanceInit.js';
 
 //textures
 import Cloth from './texture/cloth/fabric_85_basecolor-1K.png';
-import { Vector2 } from 'three';
+import ClothRough from './texture/cloth/fabric_85_roughness-1K.png';
+import ClothAO from './texture/cloth/fabric_85_ambientocclusion-1K.png';
+import ClothBump from './texture/cloth/fabric_85_height-1K.png';
+import ClothNormal from './texture/cloth/fabric_85_normal-1K.png';
+import ClothMetallic from './texture/cloth/fabric_85_metallic-1K.png';
 
 require('normalize.css/normalize.css');
 require("./index.css");
@@ -17,6 +21,11 @@ require("./index.css");
 
 const loader = new THREE.TextureLoader();
 const cloth = loader.load(Cloth);
+const clothRough = loader.load(ClothRough);
+const clothAO = loader.load(ClothAO);
+const clothBump = loader.load(ClothBump);
+const clothNormal = loader.load(ClothNormal);
+const clothMetallic = loader.load(ClothMetallic);
 
 //
 
@@ -24,6 +33,8 @@ let renderer, scene, camera, controls;
 let container, stats, clock;
 let instancePoints, shapeGeometry, shape, sticks;
 let dist, order;
+let hemiLight, spotLight;
+let start = Date.now();
 
 //
 
@@ -57,20 +68,30 @@ function init() {
 
     scene = new THREE.Scene();
 
-    camera.position.set(20, -20, 50);
-    camera.lookAt(200,200,200)
+    camera.position.set(5, -5, 10);
 
     cloth.anisotropy = renderer.capabilities.getMaxAnisotropy();
-    cloth.repeat = new Vector2(1,1);
 
+    hemiLight = new THREE.HemisphereLight(0xffeeb1, 0x080820, 4);
+    scene.add(hemiLight);
+
+    renderer.toneMapping = THREE.ReinhardToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    renderer.shadowMap.enabled = true;
+
+    spotLight = new THREE.SpotLight(0xffa95c, 4);
+    spotLight.castShadow = true;
+    spotLight.shadow.bias = -0.0001;
+    spotLight.shadow.mapSize = new THREE.Vector2(1024*4,1024*4);
+    scene.add(spotLight)
 }
 
 //
 
 function initObjects() {
 
-    const width = 21;
-    const height = 21;
+    const width = 51;
+    const height = 51;
 
     var obj = initInstanceObjects(width, height);
     instancePoints = obj[0];
@@ -148,18 +169,31 @@ function initObjects() {
 
     //
 
-    var material = new THREE.MeshBasicMaterial({
+    var material = new THREE.MeshStandardMaterial({
         side: THREE.DoubleSide,
-        map: cloth,
+        color: 0xe1ad01,
+        // map: cloth,
+        roughnessMap: clothRough,
+        aoMap: clothAO,
+        bumpMap: clothBump,
+        normalMap: clothNormal,
+        metalnessMap: clothMetallic,
+        normalScale: new THREE.Vector2(0.5,0.5),
+        bumpScale: 1,
+        roughness: 1,
+
         // wireframe:true
     });
 
+    // material.map.anisotropy = 16;
+    material.color.anisotropy = 16;
+
     shape = new THREE.Mesh(shapeGeometry, material);
+
+    shape.castShadow = true;
+    shape.receiveShadow = true;
+
     scene.add(shape);
-
-    
-
-
 
 }
 
@@ -219,8 +253,19 @@ function animate() {
 
     shapeGeometry.attributes.position.needsUpdate = true;
 
+    shapeGeometry.scale(0.1,0.1,0.1)
     shapeGeometry.computeFaceNormals();
     shapeGeometry.computeVertexNormals();
+
+    spotLight.position.set(
+        camera.position.x + 1,
+        camera.position.y + 1,
+        camera.position.z + 1,
+    );
+
+    scene.children.forEach(mesh => {
+        // mesh.material.uniforms.uTime.value = 0.001 * ( Date.now() - start )
+    });
 
     stats.update();
 
