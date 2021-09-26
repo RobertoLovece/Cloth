@@ -29,11 +29,13 @@ export function initInstanceObjects(width, height) {
             stick = new Stick(points[i], points[i+1]);
             sticks.push(stick);
 
-            //top to bottom
-            if (i < ((points.length-width))) {
-                stick = new Stick(points[i], points[i+width]);
-                sticks.push(stick);
-            }
+            
+        }
+        
+        //top to bottom   
+        if (i < ((points.length-width))) {
+            stick = new Stick(points[i], points[i+width]);
+            sticks.push(stick);
         }
     }
 

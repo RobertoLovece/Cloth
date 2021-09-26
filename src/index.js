@@ -1,12 +1,22 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { UVsDebug } from 'three/examples/jsm/utils/UVsDebug.js';
 
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
 import { initInstanceObjects } from './instance/InstanceInit.js';
 
+//textures
+import Cloth from './texture/cloth/fabric_85_basecolor-1K.png';
+import { Vector2 } from 'three';
+
 require('normalize.css/normalize.css');
 require("./index.css");
+
+//
+
+const loader = new THREE.TextureLoader();
+const cloth = loader.load(Cloth);
 
 //
 
@@ -43,12 +53,15 @@ function init() {
     container.appendChild(renderer.domElement);
 
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set(0, 0, dist);
+    // camera.position.set(0, 0, dist);
 
     scene = new THREE.Scene();
 
-    camera.position.set(50, 12, 50);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(20, -20, 50);
+    camera.lookAt(200,200,200)
+
+    cloth.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    cloth.repeat = new Vector2(1,1);
 
 }
 
@@ -56,14 +69,14 @@ function init() {
 
 function initObjects() {
 
-    const width = 51;
-    const height = 50;
+    const width = 21;
+    const height = 21;
 
     var obj = initInstanceObjects(width, height);
     instancePoints = obj[0];
     sticks = obj[1];
 
-    scene.add(instancePoints.mesh);
+    // scene.add(instancePoints.mesh);
 
     var axesHelper = new THREE.AxesHelper(10);
     scene.add(axesHelper);
@@ -75,41 +88,78 @@ function initObjects() {
     var squares = (width - 1) * (height - 1);
     var points = instancePoints.points;
 
-    for (let i = 0; i < (points.length+0); i++) {
+    for (let i = 0; i < (points.length + 0); i++) {
 
-        if ((i+1) < squares+(height-1)) {
-            if (((i+1) % width) != 0) {
+        if ((i + 1) < squares + (height - 1)) {
+            if (((i + 1) % width) != 0) {
                 pos.push(points[i].position);
-                pos.push(points[i+1].position);
+                pos.push(points[i + 1].position);
                 pos.push(points[i + width].position);
 
                 order.push(i);
-                order.push(i+1);
+                order.push(i + 1);
                 order.push(i + width);
 
-                pos.push(points[i+1].position);
-                pos.push(points[i+width].position);
+                pos.push(points[i + 1].position);
+                pos.push(points[i + width].position);
                 pos.push(points[i + width + 1].position);
 
-                order.push(i+1);
-                order.push(i+width);
+                order.push(i + 1);
+                order.push(i + width);
                 order.push(i + width + 1);
             }
         }
     }
 
-    // console.log(pos);
-
     shapeGeometry = new THREE.BufferGeometry().setFromPoints(pos);
+
+    shapeGeometry.computeVertexNormals();
+    shapeGeometry.computeBoundingBox();
+    
+    //
+
+    var base =
+        [
+            // top left
+            0.0, 0.0,
+            1.0, 0.0,
+            0.0, 1.0,
+
+            // bottom right
+            1.0, 0.0,
+            0.0, 1.0,
+            1.0, 1.0
+            
+        ];
+
+    var quad_uvs = []
+
+    for (let i = 0 ; i < ((width-1)*(height-1)) ; i++) {
+        base.forEach(function (q) {
+            quad_uvs.push(q)
+        });
+    }
+
+    console.log(quad_uvs);
+
+    var uvs = new Float32Array( quad_uvs);
+
+    shapeGeometry.setAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
+
+    //
+
     var material = new THREE.MeshBasicMaterial({
-        color: "blue",
         side: THREE.DoubleSide,
-        // wireframe: true,
+        map: cloth,
+        // wireframe:true
     });
+
     shape = new THREE.Mesh(shapeGeometry, material);
     scene.add(shape);
 
-    console.log(shapeGeometry.attributes.position);
+    
+
+
 
 }
 
@@ -169,6 +219,7 @@ function animate() {
 
     shapeGeometry.attributes.position.needsUpdate = true;
 
+    shapeGeometry.computeFaceNormals();
     shapeGeometry.computeVertexNormals();
 
     stats.update();
