@@ -36,11 +36,15 @@ let dist, order;
 let hemiLight, spotLight;
 let start = Date.now();
 
+// let color = '#403d39';
+let color = '#141414';
+let scale = 0.1;
+const width = 51;
+const height = 51;
+
 //
 
 window.onload = function () {
-
-    dist = 15;
 
     init();
     initObjects();
@@ -63,23 +67,22 @@ function init() {
     container = document.getElementById('canvas');
     container.appendChild(renderer.domElement);
 
+    var camOffset = 2;
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    // camera.position.set(0, 0, dist);
+    camera.position.set((width * scale) + camOffset, 2, (height * scale) + camOffset);
 
     scene = new THREE.Scene();
 
-    camera.position.set(5, -5, 10);
-
     cloth.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
-    hemiLight = new THREE.HemisphereLight(0xffeeb1, 0x080820, 4);
+    hemiLight = new THREE.HemisphereLight(0xc4dce5, 0x080820, 4);
     scene.add(hemiLight);
 
     renderer.toneMapping = THREE.ReinhardToneMapping;
     renderer.toneMappingExposure = 1.2;
     renderer.shadowMap.enabled = true;
 
-    spotLight = new THREE.SpotLight(0xffa95c, 4);
+    spotLight = new THREE.SpotLight(0xc4dce5, 4);
     spotLight.castShadow = true;
     spotLight.shadow.bias = -0.0001;
     spotLight.shadow.mapSize = new THREE.Vector2(1024*4,1024*4);
@@ -89,18 +92,10 @@ function init() {
 //
 
 function initObjects() {
-
-    const width = 51;
-    const height = 51;
-
+ 
     var obj = initInstanceObjects(width, height);
     instancePoints = obj[0];
     sticks = obj[1];
-
-    // scene.add(instancePoints.mesh);
-
-    var axesHelper = new THREE.AxesHelper(10);
-    scene.add(axesHelper);
 
     var pos = []
     order = []
@@ -161,8 +156,6 @@ function initObjects() {
         });
     }
 
-    console.log(quad_uvs);
-
     var uvs = new Float32Array( quad_uvs);
 
     shapeGeometry.setAttribute( 'uv', new THREE.BufferAttribute( uvs, 2 ) );
@@ -171,21 +164,22 @@ function initObjects() {
 
     var material = new THREE.MeshStandardMaterial({
         side: THREE.DoubleSide,
-        color: 0xe1ad01,
-        // map: cloth,
+
+        color: color,
+
         roughnessMap: clothRough,
         aoMap: clothAO,
         bumpMap: clothBump,
         normalMap: clothNormal,
         metalnessMap: clothMetallic,
+
         normalScale: new THREE.Vector2(0.5,0.5),
         bumpScale: 1,
         roughness: 1,
 
-        // wireframe:true
     });
 
-    // material.map.anisotropy = 16;
+
     material.color.anisotropy = 16;
 
     shape = new THREE.Mesh(shapeGeometry, material);
@@ -202,11 +196,16 @@ function initObjects() {
 function initControls() {
 
     controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set( (width * 0.1) / 2, 0, (height * 0.1) / 2 );
 
-    controls.enablePan = true;
-    controls.enableZoom = true;
-    controls.enableRotate = true;
+    controls.enablePan = false;
+    controls.enableZoom = false;
+    controls.enableRotate = false;
 
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
+
+    controls.update();
 }
 
 
@@ -214,6 +213,9 @@ function initControls() {
 //
 
 function initStats() {
+
+    // var axesHelper = new THREE.AxesHelper(10);
+    // scene.add(axesHelper);
 
     stats = new Stats();
     document.body.appendChild(stats.dom);
@@ -253,7 +255,7 @@ function animate() {
 
     shapeGeometry.attributes.position.needsUpdate = true;
 
-    shapeGeometry.scale(0.1,0.1,0.1)
+    shapeGeometry.scale(scale, scale, scale)
     shapeGeometry.computeFaceNormals();
     shapeGeometry.computeVertexNormals();
 
@@ -263,10 +265,7 @@ function animate() {
         camera.position.z + 1,
     );
 
-    scene.children.forEach(mesh => {
-        // mesh.material.uniforms.uTime.value = 0.001 * ( Date.now() - start )
-    });
-
+    controls.update();
     stats.update();
 
     renderer.render(scene, camera);
@@ -274,3 +273,31 @@ function animate() {
 }
 
 //
+// EVENT LISTENERS
+//
+
+window.addEventListener('resize', onWindowResize, false);
+window.addEventListener('click', onClick, false);
+
+//
+
+function onWindowResize() {
+    container = document.getElementById('canvas');
+
+    var width = container.offsetWidth;
+    var height = container.offsetHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+
+    renderer.setPixelRatio( window.devicePixelRatio );
+    renderer.setSize(width, height);
+}
+
+//
+
+function onClick(e) {
+    instancePoints.gravity = instancePoints.gravity * -1;
+}   
+
+

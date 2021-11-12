@@ -17,6 +17,8 @@ export default class InstancePoint {
 
         this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); // will be updated every frame
 
+        this.gravity = -9.81;
+
     }
 
     //
@@ -31,7 +33,7 @@ export default class InstancePoint {
             var index = random[i];
             var point = this.points[index]; 
             
-            point.updatePoint(delta);
+            point.updatePoint(delta, this.gravity);
             // point.test();
 
             dummy.position.set(point.position.x, point.position.y, point.position.z);
