@@ -1,21 +1,20 @@
 import * as THREE from 'three';
-import { Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import Stats from 'three/examples/jsm/libs/stats.module.js';
 
-import { initInstanceObjects } from './instance/InstanceInit.js';
+import { initInstanceObjects } from './src/instance/InstanceInit.js';
 
 //textures
-import Cloth from './texture/cloth/fabric_85_basecolor-1K.png';
-import ClothRough from './texture/cloth/fabric_85_roughness-1K.png';
-import ClothAO from './texture/cloth/fabric_85_ambientocclusion-1K.png';
-import ClothBump from './texture/cloth/fabric_85_height-1K.png';
-import ClothNormal from './texture/cloth/fabric_85_normal-1K.png';
-import ClothMetallic from './texture/cloth/fabric_85_metallic-1K.png';
+import Cloth from './src/cloth-texture/fabric_85_basecolor-1K.png';
+import ClothRough from './src/cloth-texture/fabric_85_roughness-1K.png';
+import ClothAO from './src/cloth-texture/fabric_85_ambientocclusion-1K.png';
+import ClothBump from './src/cloth-texture/fabric_85_height-1K.png';
+import ClothNormal from './src/cloth-texture/fabric_85_normal-1K.png';
+import ClothMetallic from './src/cloth-texture/fabric_85_metallic-1K.png';
 
 require('normalize.css/normalize.css');
-require("./index.css");
+require("./src/index.css");
 
 //
 
