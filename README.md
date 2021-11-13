@@ -7,7 +7,7 @@
 
 ## Overview
 
-My second piece of work using Verlet integration I wanted to expand my first demo (https://github.com/RobertoLovece/Rope-Grid) into 3D domain to create a fully fledged cloth simulation.
+My second piece of work using Verlet integration I wanted to expand my first demo (https://github.com/RobertoLovece/Rope-Grid) into a 3D domain to create a fully fledged cloth simulation.
 
 ## Instructions
 
