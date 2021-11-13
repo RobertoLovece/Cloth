@@ -68,7 +68,7 @@ function init() {
 
     var camOffset = 2;
     camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.set((width * scale) + camOffset, 2, (height * scale) + camOffset);
+    camera.position.set((width * scale)/2, 2, (height * scale) + camOffset);
 
     scene = new THREE.Scene();
 
@@ -197,12 +197,12 @@ function initControls() {
     controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set( (width * 0.1) / 2, 0, (height * 0.1) / 2 );
 
-    controls.enablePan = false;
-    controls.enableZoom = false;
-    controls.enableRotate = false;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    controls.enableRotate = true;
 
-    controls.autoRotate = true;
-    controls.autoRotateSpeed = 1.0;
+    // controls.autoRotate = true;
+    // controls.autoRotateSpeed = 1.0;
 
     controls.update();
 }
@@ -217,7 +217,7 @@ function initStats() {
     // scene.add(axesHelper);
 
     stats = new Stats();
-    document.body.appendChild(stats.dom);
+    // document.body.appendChild(stats.dom);
 
 }
 

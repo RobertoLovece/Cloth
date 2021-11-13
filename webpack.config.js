@@ -18,6 +18,7 @@ module.exports = {
  	plugins: [
 		new HtmlWebpackPlugin({
 		  	template: './index.html',
+			favicon: './src/cloth.png',
 		  	inject: true,
 		  	chunks: ['index'],
 		  	filename: 'index.html'
